@@ -47,3 +47,10 @@ po/*~
 
 # RStudio Connect folder
 rsconnect/
+
+# Too large data files
+rjavaenv/*
+r5r_london/Stops.csv
+r5r_london/greater-london-260414.osm.pbf
+r5r_london/L.zip
+r5r_london/gtfs_london.zip
