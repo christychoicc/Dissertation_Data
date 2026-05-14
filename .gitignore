@@ -51,9 +51,14 @@ rsconnect/
 # Too large data files
 rjavaenv/*
 tmp/*
+# London LSOA Boundaries
+Lower_layer_Super_Output_Areas_December_2021_Boundaries_EW_BFC_V10/*
+# raw data to convert to GTFS
 r5r_data/raw_data/Stops.csv
 r5r_data/raw_data/L.zip
 r5r_data/raw_data/timetable.zip
+# Ready GTFS
 r5r_data/r5r_london_data/greater-london-260414.osm.pbf
 r5r_data/r5r_london_data/gtfs_london.zip
 r5r_data/r5r_london_data/gtfs_rail.zip
+
