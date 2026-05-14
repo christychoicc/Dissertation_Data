@@ -1,0 +1,168 @@
+---
+title: "Data Prevalidation Preparation"
+output: html_notebook
+---
+
+## 1. Google Earth Engine
+
+GEE images code link: <https://code.earthengine.google.com/3d798edab81ae80002b71aa8a58ee5db>
+
+GEE images count code link: <https://code.earthengine.google.com/e82b9d4616df0c3b05dd6f7c280cdc1d>
+
+**Data Available:**
+
+-   2022: Landsat 8
+
+-   2024: Landsat 8 and 9 (merge together?)
+
+-   2025: Landsat 9
+
+## 2. r5r
+
+### 2.1. Installation
+
+**Install r5r:**
+
+```{r}
+# Code Source: https://ipeagit.github.io/r5r/
+# from CRAN
+# install.packages("r5r")
+
+# dev version with latest features
+# utils::remove.packages('r5r')
+# devtools::install_github("ipeaGIT/r5r", subdir = "r-package")
+```
+
+**Install JDK using {rJavaEnv} package in order to use r5r:**
+
+```         
+Downloaded in: C:\Users\choic\AppData\Local\R\cache\R\rJavaEnv\installed\windows\x64\21
+Also downloaded in: C:\Users\choic\CASA\Dissertation_Data\rjavaenv\windows\x64\21
+```
+
+```{r}
+# install.packages('rJavaEnv')
+
+# check version of Java currently installed (if any) 
+rJavaEnv::java_check_version_rjava()
+
+# install Java 21
+rJavaEnv::java_quick_install(version = 21)
+```
+
+**Load r5r:**
+
+```{r}
+# Install from CRAN
+# install.packages("r5r")
+
+# Warning message: Currently, Java memory is set to "-Xmx512m"
+# Warning message suggest set Java max memory to 2 GB before loading r5r
+options(java.parameters = '-Xmx2G')
+library(r5r)
+```
+
+### 2.2. Data Sources
+
+**Data requirements for r5r :** <https://ipeagit.github.io/r5r/#data-requirements>
+
+-   Road network data set from OpenStreetMap in .pbf format
+
+-   Public transport feed in GTFS.zip format
+
++-----------------------+---------------------------------------------------------------------------------------------------------------------------------------+---------------------------------------------------------------------------------------+
+| Data                  | Description                                                                                                                           | Link                                                                                  |
++=======================+=======================================================================================================================================+=======================================================================================+
+| GTFS                  | Download as NaPTAN file                                                                                                               | <https://beta-naptan.dft.gov.uk/>                                                     |
+|                       |                                                                                                                                       |                                                                                       |
+|                       | It then needs to be converted into a GTFS format (<https://citygeographics.org/r5r-workshop/uk-transit-data-transxchange-and-atoc/>). |                                                                                       |
++-----------------------+---------------------------------------------------------------------------------------------------------------------------------------+---------------------------------------------------------------------------------------+
+| GTFS                  | Download L.zip (for London) (downloaded on 16/04/2026)                                                                                | Look for Core FTP and use the access host, username and password from the sent email. |
++-----------------------+---------------------------------------------------------------------------------------------------------------------------------------+---------------------------------------------------------------------------------------+
+| Road Network from OSM | Downloaded as .pbf file                                                                                                               | <https://download.geofabrik.de/europe/united-kingdom/england/greater-london.html>     |
++-----------------------+---------------------------------------------------------------------------------------------------------------------------------------+---------------------------------------------------------------------------------------+
+
+### 2.2. GTFS Data 
+
+#### 2.2.1. Convert data into GTFS format
+
+```{r, eval=FALSE}
+remotes::install_github("ITSleeds/UK2GTFS")
+```
+
+```{r, eval=FALSE}
+# Convert London TNDS (TransXChange) data into a GTFS object for later use in r5r
+
+# Load the specific package for converting to GTFS
+library(UK2GTFS)
+
+# Load Packages
+library(readr)
+library(dplyr)
+
+
+# Read NaPTAN stop data and rename columns for use with UK2GTFS
+naptan_local <- read_csv("r5r_london/Stops.csv", show_col_types = FALSE) %>%
+  rename(
+    stop_id = ATCOCode,
+    stop_name = CommonName,
+    stop_lat = Latitude,
+    stop_lon = Longitude,
+    stop_type = StopType
+  )
+
+# %>%
+#    filter(!is.na(stop_id),
+#          !is.na(stop_name),
+#          !is.na(stop_lat),
+#          !is.na(stop_lon))
+
+
+
+# Using the L.zip (London specific file) and convert into a GTFS object
+path_in <- "r5r_london/L.zip"
+gtfs <- transxchange2gtfs(path_in = path_in,
+                          # remove this line if it is not local
+                          # naptan = naptan_local,
+                          ncores = 5)
+```
+
+```{r, eval=FALSE}
+# Save as GTFS file
+gtfs_write(gtfs, 
+           folder = "r5r_london/",
+           name = "gtfs_london")
+```
+
+#### GTFS
+
+```{r}
+# Load in GTFS file
+
+# install.packages("gtfstools")
+library(gtfstools)
+
+gtfs <- read_gtfs("r5r_london/gtfs_london.zip")
+```
+
+```{r}
+# Check
+names(gtfs)
+sapply(gtfs, nrow)
+```
+
+```{r}
+# Check any missing data
+length(setdiff(unique(gtfs$stop_times$trip_id), unique(gtfs$trips$trip_id)))
+length(setdiff(unique(gtfs$trips$route_id), unique(gtfs$routes$route_id)))
+length(setdiff(unique(gtfs$stop_times$stop_id), unique(gtfs$stops$stop_id)))
+
+calendar_service_ids <- if ("calendar" %in% names(gtfs)) unique(gtfs$calendar$service_id) else character(0)
+calendar_dates_service_ids <- if ("calendar_dates" %in% names(gtfs)) unique(gtfs$calendar_dates$service_id) else character(0)
+length(setdiff(unique(gtfs$trips$service_id), union(calendar_service_ids, calendar_dates_service_ids)))
+```
+
+```{r}
+range(gtfs$calendar$start_date)
+range(gtfs$calendar$end_date)
+```
