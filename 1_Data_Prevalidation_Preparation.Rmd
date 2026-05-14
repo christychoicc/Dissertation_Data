@@ -1,6 +1,5 @@
 ---
 title: "Data Prevalidation Preparation"
-output: html_notebook
 ---
 
 ## 1. Google Earth Engine
@@ -36,8 +35,9 @@ GEE images count code link: <https://code.earthengine.google.com/e82b9d4616df0c3
 **Install JDK using {rJavaEnv} package in order to use r5r:**
 
 ```         
-Downloaded in: C:\Users\choic\AppData\Local\R\cache\R\rJavaEnv\installed\windows\x64\21
-Also downloaded in: C:\Users\choic\CASA\Dissertation_Data\rjavaenv\windows\x64\21
+Java version: "21.0.10"
+Installed at: C:\Users\choic\AppData\Local\R\cache\R\rJavaEnv\installed\windows\x64\21
+Symlinked to: C:\Users\choic\CASA\Dissertation_Data\rjavaenv\windows\x64\21
 ```
 
 ```{r}
@@ -62,29 +62,26 @@ options(java.parameters = '-Xmx2G')
 library(r5r)
 ```
 
-### 2.2. Data Sources
+### 2.2. Data
 
-**Data requirements for r5r :** <https://ipeagit.github.io/r5r/#data-requirements>
+**Data requirements for r5r** <https://ipeagit.github.io/r5r/#data-requirements> **:**
 
 -   Road network data set from OpenStreetMap in .pbf format
 
 -   Public transport feed in GTFS.zip format
 
-+-----------------------+---------------------------------------------------------------------------------------------------------------------------------------+---------------------------------------------------------------------------------------+
-| Data                  | Description                                                                                                                           | Link                                                                                  |
-+=======================+=======================================================================================================================================+=======================================================================================+
-| GTFS                  | Download as NaPTAN file                                                                                                               | <https://beta-naptan.dft.gov.uk/>                                                     |
-|                       |                                                                                                                                       |                                                                                       |
-|                       | It then needs to be converted into a GTFS format (<https://citygeographics.org/r5r-workshop/uk-transit-data-transxchange-and-atoc/>). |                                                                                       |
-+-----------------------+---------------------------------------------------------------------------------------------------------------------------------------+---------------------------------------------------------------------------------------+
-| GTFS                  | Download L.zip (for London) (downloaded on 16/04/2026)                                                                                | Look for Core FTP and use the access host, username and password from the sent email. |
-+-----------------------+---------------------------------------------------------------------------------------------------------------------------------------+---------------------------------------------------------------------------------------+
-| Road Network from OSM | Downloaded as .pbf file                                                                                                               | <https://download.geofabrik.de/europe/united-kingdom/england/greater-london.html>     |
-+-----------------------+---------------------------------------------------------------------------------------------------------------------------------------+---------------------------------------------------------------------------------------+
+| Data | Description | Source |
+|-----------------|----------------------------------|---------------------|
+| Stops.csv (Stops location) | Download as NaPTAN (National Public Transport Access Nodes) file, to be connected to TransXChange data, to be converted into a GTFS format (<https://citygeographics.org/r5r-workshop/uk-transit-data-transxchange-and-atoc/>). | <https://beta-naptan.dft.gov.uk/> |
+| L.zip (TransXChange timetable data) | Download L.zip (for London) (downloaded on 16/04/2026), to be converted into GTFS | Look for Core FTP and use the access host, username and password from the sent email |
+| timetable.zip (Train timetable data) |  | <https://opendata.nationalrail.co.uk/> |
+| OSM in .pbf format (Road network) | Downloaded as .pbf file, to be used directly for r5r | <https://download.geofabrik.de/europe/united-kingdom/england/greater-london.html> |
 
 ### 2.2. GTFS Data 
 
-#### 2.2.1. Convert data into GTFS format
+#### 2.2.1. Bus, Tube, Tram Data 
+
+**Convert data into GTFS format**
 
 ```{r, eval=FALSE}
 remotes::install_github("ITSleeds/UK2GTFS")
@@ -102,7 +99,7 @@ library(dplyr)
 
 
 # Read NaPTAN stop data and rename columns for use with UK2GTFS
-naptan_local <- read_csv("r5r_london/Stops.csv", show_col_types = FALSE) %>%
+naptan_local <- read_csv("r5r_data/raw_data/Stops.csv", show_col_types = FALSE) %>%
   rename(
     stop_id = ATCOCode,
     stop_name = CommonName,
@@ -120,49 +117,58 @@ naptan_local <- read_csv("r5r_london/Stops.csv", show_col_types = FALSE) %>%
 
 
 # Using the L.zip (London specific file) and convert into a GTFS object
-path_in <- "r5r_london/L.zip"
+path_in <- "r5r_data/raw_data/L.zip"
 gtfs <- transxchange2gtfs(path_in = path_in,
                           # remove this line if it is not local
-                          # naptan = naptan_local,
+                          naptan = naptan_local,
                           ncores = 5)
 ```
+
+```         
+MISSING VALUES:
+London Underground (9400ZZLU...) — 9400ZZLUBTK2, 9400ZZLUCND2, 9400ZZLUHCL2, 9400ZZLUBTX2, 9400ZZLUCFM2, 9400ZZLUMTC2, 9400ZZLUGDG2, 9400ZZLUWLO7, 9400ZZLUAGL2, 9400ZZLUODS2, 9400ZZLULNB4, 9400ZZLUCPN2, 9400ZZLUCPC2, 9400ZZLUCPS2, 9400ZZLUBLM2, 9400ZZLUTBC2, 9400ZZLUTBY2, 9400ZZLUCSD2, 9400ZZLUSWN2, 9400ZZLUHGT2, 9400ZZLUACY2, 9400ZZLUHWC2, 9400ZZLUHWT2, 9400ZZLUHNX2, 9400ZZLUSGT2, 9400ZZLUBDS2, 9400ZZLUWOG2, 9400ZZLUTPN2, 9400ZZLUMRH2, 9400ZZLUHWY2, 9400ZZLUGPK6, 9400ZZLUHPC2, 9400ZZLUCAR2, 9400ZZLUOAK2, 9400ZZLUSFS2, 9400ZZLUWIP2, 9400ZZLUGBY2, 9400ZZLUUPB2, 9400ZZLUEPK2, 9400ZZLUUPY2, 9400ZZLUGTH2, 9400ZZLURBG2, 9400ZZLUWSD2, 9400ZZLUBLG2, 9400ZZLUBND4, 9400ZZLUMBA2, 9400ZZLULGT2, 9400ZZLUQWY2, 9400ZZLUSBC2, 9400ZZLUHGR2, 9400ZZLUPVL2, 9400ZZLUNHT2, 9400ZZLUSRP2, 9400ZZLURSG2, 9400ZZLUCYF2, 9400ZZLULNB3, 9400ZZLUWLO8, 9400ZZLUWHP2, 9400ZZLUWIG2, 9400ZZLUSWC2, 9400ZZLUSJW2, 9400ZZLUNDN2, 9400ZZLUDOH2, 9400ZZLUKSX8, 9400ZZLUNKP2, 9400ZZLUPRD2, 9400ZZLUBLR2, 9400ZZLUTMH2, 9400ZZLUPCO2, 9400ZZLUVXL2, 9400ZZLUSKT2, 9400ZZLUKPK2, 9400ZZLUMVL2, 9400ZZLUWKA2, 9400ZZLULBN2, 9400ZZLURYO2
+DLR (9400ZZDL...) — 9400ZZDLPOP4, 9400ZZDLSHA2, 9400ZZDLTWG2, 9400ZZDLKGV2, 9400ZZDLISL2, 9400ZZDLCUT2, 9400ZZDLBNK2, 9400ZZDLLCA2, 9400ZZDLPRE2, 9400ZZDLCUS2
+Bus (490...) — 490000283N
+```
+
+**Save as GTFS data file**
 
 ```{r, eval=FALSE}
 # Save as GTFS file
 gtfs_write(gtfs, 
-           folder = "r5r_london/",
+           folder = "r5r_data/r5r_london_data",
            name = "gtfs_london")
 ```
 
-#### GTFS
+#### 2.2.2. Rail Data 
 
 ```{r}
-# Load in GTFS file
+# Data taken from National Rail Portal
+# Save username and password
+install.packages("usethis")
+library(usethis)
 
-# install.packages("gtfstools")
-library(gtfstools)
-
-gtfs <- read_gtfs("r5r_london/gtfs_london.zip")
+usethis::edit_r_environ()
 ```
 
 ```{r}
-# Check
-names(gtfs)
-sapply(gtfs, nrow)
+# Check if username is saved
+Sys.getenv("NRDP_username")
 ```
 
 ```{r}
-# Check any missing data
-length(setdiff(unique(gtfs$stop_times$trip_id), unique(gtfs$trips$trip_id)))
-length(setdiff(unique(gtfs$trips$route_id), unique(gtfs$routes$route_id)))
-length(setdiff(unique(gtfs$stop_times$stop_id), unique(gtfs$stops$stop_id)))
+# Restarted R session, so load this library again
+# Load the specific package for converting to GTFS
+library(UK2GTFS)
 
-calendar_service_ids <- if ("calendar" %in% names(gtfs)) unique(gtfs$calendar$service_id) else character(0)
-calendar_dates_service_ids <- if ("calendar_dates" %in% names(gtfs)) unique(gtfs$calendar_dates$service_id) else character(0)
-length(setdiff(unique(gtfs$trips$service_id), union(calendar_service_ids, calendar_dates_service_ids)))
-```
+nrdp_timetable("r5r_data/raw_data/timetable.zip")
 
-```{r}
-range(gtfs$calendar$start_date)
-range(gtfs$calendar$end_date)
+path_in <- "r5r_data/raw_data/timetable.zip"
+gtfs_rail <- atoc2gtfs(path_in = path_in,
+                       ncores = 5)
+
+gtfs_write(gtfs_rail,
+           folder = "r5r_data/r5r_london_data",
+           name = "gtfs_rail"
+)
 ```
