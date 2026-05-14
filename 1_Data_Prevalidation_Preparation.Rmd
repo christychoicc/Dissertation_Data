@@ -74,7 +74,7 @@ library(r5r)
 |-----------------|----------------------------------|---------------------|
 | Stops.csv (Stops location) | Download as NaPTAN (National Public Transport Access Nodes) file, to be connected to TransXChange data, to be converted into a GTFS format (<https://citygeographics.org/r5r-workshop/uk-transit-data-transxchange-and-atoc/>). | <https://beta-naptan.dft.gov.uk/> |
 | L.zip (TransXChange timetable data) | Download L.zip (for London) (downloaded on 16/04/2026), to be converted into GTFS | Look for Core FTP and use the access host, username and password from the sent email |
-| timetable.zip (Train timetable data) |  | <https://opendata.nationalrail.co.uk/> |
+| timetable.zip (Train timetable data) | Convert to GTFS | <https://opendata.nationalrail.co.uk/> |
 | OSM in .pbf format (Road network) | Downloaded as .pbf file, to be used directly for r5r | <https://download.geofabrik.de/europe/united-kingdom/england/greater-london.html> |
 
 ### 2.2. GTFS Data 
@@ -153,7 +153,7 @@ usethis::edit_r_environ()
 
 ```{r}
 # Check if username is saved
-Sys.getenv("NRDP_username")
+# Sys.getenv("NRDP_username")
 ```
 
 ```{r}
