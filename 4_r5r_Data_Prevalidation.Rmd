@@ -52,19 +52,19 @@ origins <- st_centroid(camden_lsoa) %>%
   # create new column
   mutate(
     id  = LSOA21CD,
-    long = unlist(map(geometry,1)),
+    lon = unlist(map(geometry,1)),
     lat = unlist(map(geometry,2))
   )
 # remove geometry column
 origins$geometry <- NULL
 # only keep id, lon and lat
 origins <- origins %>%
-  select(id, long, lat)
+  select(id, lon, lat)
 
 head(origins, 5)
 ```
 
-### Destination 
+### Destination
 
 Testing on Camden borough only, so filter greenspace access points to Camden only first:
 
@@ -74,6 +74,8 @@ greenspace_accesspoint_camden <- greenspace_accesspoint_london[
 
 nrow(greenspace_accesspoint_camden)
 ```
+
+Now set destination:
 
 ```{r}
 destinations <- greenspace_accesspoint_camden %>%
@@ -104,4 +106,51 @@ library(r5r)
 
 #path <- system.file("r5r_path", package = "r5r")
 r5r_core <- setup_r5(data_path = "r5r_data/r5r_london_data.")
+```
+
+Select routing parameters (travel times):
+
+```{r}
+# routing paramaters
+# travel by public transport only
+
+mode <- c("TRANSIT")
+
+# maximum trip durations to be 1 hour (60 min)
+max_trip_duration <- 60 
+
+# can change to just a day (no time) and it will return min time of the entire day 
+# here I chose 01/07/2025 and 12 p.m. for testing purposes
+departure_datetime <- as.POSIXct("01-07-2025 12:00:00", 
+                                 format = "%d-%m-%Y %H:%M:%S",
+                                 tz = "Europe/London")
+
+# estimating the travel time
+TTM_Camden_PT <- travel_time_matrix(r5r_core,
+                          origins = origins,
+                          destinations = destinations,
+                          mode = mode,
+                          departure_datetime = departure_datetime,
+                          max_trip_duration = max_trip_duration)
+```
+
+```{r}
+# routing paramaters
+# travel by walking only 
+
+mode <- c("WALK")
+
+max_trip_duration <- 60
+
+departure_datetime <- as.POSIXct("01-03-2021 14:00:00", 
+                                 format = "%d-%m-%Y %H:%M:%S",
+                                 tz = "Europe/London")
+
+# estimating the travel time
+TTM_Camden_walk <- travel_time_matrix(r5r_core,
+                          origins = origins,
+                          destinations = destinations,
+                          mode = mode,
+                          departure_datetime = departure_datetime,
+                          max_trip_duration = max_trip_duration)
 ```
