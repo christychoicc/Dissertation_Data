@@ -157,7 +157,7 @@ gtfs_write(gtfs_rail,
 )
 ```
 
-Check what companies there are in the file (for filtering to London services only):
+Check what companies there are in the file (maybe filter to London services only?):
 
 ```{r}
 library(UK2GTFS)
