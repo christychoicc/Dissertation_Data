@@ -156,3 +156,68 @@ gtfs_write(gtfs_rail,
            name = "gtfs_rail"
 )
 ```
+
+Check what companies there are in the file (for filtering to London services only):
+
+```{r}
+library(UK2GTFS)
+library(tidytransit)
+
+# read your already converted rail GTFS
+gtfs_rail <- read_gtfs("r5r_data/r5r_london_data/gtfs_rail.zip")
+
+# see all agency names
+gtfs_rail$agency %>%
+  select(agency_id, agency_name) %>%
+  arrange(agency_name)
+```
+
+```{r}
+# see all codes you have
+gtfs_rail$agency %>% pull(agency_id)
+```
+
+```{r}
+# Select London railway services operators
+# http://www.railwaycodes.org.uk/operators/toccodes.shtm
+london_operators <- c(
+   # Key London operators
+  "LT",  # London Underground
+  "LO",  # London Overground
+  "XR",  # Elizabeth line
+  
+  # Wider London Operators
+  "TL",  # Thameslink: St Pancras, City Thameslink, Blackfriars, London Bridge
+  "GN",  # Great Northern: King's Cross, Moorgate/Old Street, ...north London
+  "SN",  # Southern: Victoria, London Bridge, ...south London
+  "SE",  # Southeastern: Charing Cross, Cannon Street, Victoria, London Bridge...
+  "SW",  # South Western Railway: Waterloo + Vauxhall; south-west London
+  "GX"   # Gatwick Express
+)
+
+# filter to only london operators
+gtfs_rail_london <- gtfs_rail
+gtfs_rail_london$agency <- gtfs_rail$agency %>%
+  filter(agency_id %in% london_operators)
+
+# filter routes
+gtfs_rail_london$routes <- gtfs_rail$routes %>%
+  filter(agency_id %in% london_operators)
+
+# filter trips 
+gtfs_rail_london$trips <- gtfs_rail$trips %>%
+  filter(route_id %in% gtfs_rail_london$routes$route_id)
+
+# filter stop_times 
+gtfs_rail_london$stop_times <- gtfs_rail$stop_times %>%
+  filter(trip_id %in% gtfs_rail_london$trips$trip_id)
+
+# Check before and after filtering
+nrow(gtfs_rail$stop_times)
+nrow(gtfs_rail_london$stop_times)
+```
+
+```{r}
+# save
+# gtfs_write(gtfs_rail_london, folder = "r5r_data/r5r_london_data", name = "gtfs_rail_london")
+```
