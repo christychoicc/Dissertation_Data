@@ -1,24 +1,8 @@
 ---
-title: "Data Prevalidation Preparation"
+title: "r5r Data Preparation"
 ---
 
-## 1. Google Earth Engine
-
-GEE images code link: <https://code.earthengine.google.com/3d798edab81ae80002b71aa8a58ee5db>
-
-GEE images count code link: <https://code.earthengine.google.com/e82b9d4616df0c3b05dd6f7c280cdc1d>
-
-**Data Available:**
-
--   2022: Landsat 8
-
--   2024: Landsat 8 and 9 (merge together?)
-
--   2025: Landsat 9
-
-## 2. r5r
-
-### 2.1. Installation
+### 1. Installation
 
 **Install r5r:**
 
@@ -62,7 +46,7 @@ options(java.parameters = '-Xmx2G')
 library(r5r)
 ```
 
-### 2.2. Data
+### 2. Data
 
 **Data requirements for r5r** <https://ipeagit.github.io/r5r/#data-requirements> **:**
 
@@ -71,15 +55,15 @@ library(r5r)
 -   Public transport feed in GTFS.zip format
 
 | Data | Description | Source |
-|-----------------|----------------------------------|---------------------|
+|------------------|---------------------------------|---------------------|
 | Stops.csv (Stops location) | Download as NaPTAN (National Public Transport Access Nodes) file, to be connected to TransXChange data, to be converted into a GTFS format (<https://citygeographics.org/r5r-workshop/uk-transit-data-transxchange-and-atoc/>). | <https://beta-naptan.dft.gov.uk/> |
 | L.zip (TransXChange timetable data) | Download L.zip (for London) (downloaded on 16/04/2026), to be converted into GTFS | Look for Core FTP and use the access host, username and password from the sent email |
 | timetable.zip (Train timetable data) | Convert to GTFS | <https://opendata.nationalrail.co.uk/> |
 | OSM in .pbf format (Road network) | Downloaded as .pbf file, to be used directly for r5r | <https://download.geofabrik.de/europe/united-kingdom/england/greater-london.html> |
 
-### 2.2. GTFS Data 
+### 3. GTFS Data
 
-#### 2.2.1. Bus, Tube, Tram Data 
+#### 3.1. Bus, Tube, Tram Data
 
 **Convert data into GTFS format**
 
@@ -140,7 +124,7 @@ gtfs_write(gtfs,
            name = "gtfs_london")
 ```
 
-#### 2.2.2. Rail Data 
+#### 3.2. Rail Data
 
 ```{r}
 # Data taken from National Rail Portal
