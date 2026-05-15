@@ -5,7 +5,7 @@
 |---|---|---|---|---|
 |Google Earth Engine|Landsat 8/9 Collection 2 Level 2|Relevant bands will be used to derive LST, NDVI and NDWI for summer periods|[View Link](https://developers.google.com/earth-engine/datasets/catalog/LANDSAT_LC08_C02_T1_L2)|Obtain Land Surface Temperature (LST), NDVI, NDWI to identify hot/ cool areas|
 |r5r|National Public Transport Access Nodes (NaPTAN)|Public transport stops locations|[View Link](https://beta-naptan.dft.gov.uk/)|Stops data used to connect stops data with timetable data for GTFS for r5r|
-|r5r|TransXchange Data, Traveline National Dataset (TNDS) via Core FTP|Public transport services (bus, tram, tube) timetable data|[View Link](https://www.travelinedata.org.uk/traveline-open-data/traveline-national-dataset/)|Convert to GTFS format with stops data for r5r|
+|r5r|TransXchange Data, Traveline National Dataset (TNDS) via Core FTP|Public transport services (bus, tram, tube) timetable data|[View Link](https://www.travelinedata.org.uk/traveline-open-data/traveline-national-dataset/)|[Convert to GTFS format](https://itsleeds.github.io/UK2GTFS/articles/transxchange.html) with stops data for r5r|
 |r5r|National Rail Timetable Data|Train timetable data to be used alongside public transport services|[View Link](https://opendata.nationalrail.co.uk/)|Train network for GTFS for r5r|
 |r5r|OpenStreetMap, Greater London|Road network data in .pbf format|[View Link](https://download.geofabrik.de/europe/united-kingdom/england/greater-london.html)|Road network for r5r|
 |Polygons/ Access Points|OS Open Greenspace|Accessible greenspace and its access points (parks, playing fields, etc.)|[View Link](https://www.ordnancesurvey.co.uk/products/os-open-greenspace)|Accessibility routing destination of greenspace access points|
