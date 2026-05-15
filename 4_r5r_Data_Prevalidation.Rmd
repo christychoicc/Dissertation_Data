@@ -1,0 +1,107 @@
+---
+title: "r5r Data Prevalidation "
+---
+
+## 1. Load Packages
+
+```{r}
+# Load packages
+library(r5r)
+library(sf)
+library(dplyr)
+library(tidyverse)
+library(tmap)
+```
+
+## 2. Data Loading and Pre-processing
+
+```{r}
+# Load London LSOA shapefile
+lsoa_london <- st_read("lsoa_london/lsoa_london.shp")
+```
+
+```{r}
+# Load Greenspace Access Points
+greenspace_accesspoint_london <- st_read("OS-Open-Greenspace-GB/GB_AccessPoint/GB_AccessPoint.shp") %>%
+  # Ensure consistent CRS
+  st_transform(st_crs(lsoa_london)) %>%
+  # Filter to London only
+  .[st_intersects(., st_union(lsoa_london), sparse = FALSE), ]
+```
+
+```{r}
+# filter to all Camden LSOAs
+camden_lsoa <- lsoa_london %>%
+  filter(grepl("Camden", LSOA21NM))
+
+# check how many LSOAs Camden has
+nrow(camden_lsoa)
+```
+
+## 3. Create Origin and Destinations
+
+### Origin
+
+```{r}
+sf_use_s2(FALSE)
+
+# create origin points
+origins <- st_centroid(camden_lsoa) %>%
+  # reproject
+  st_transform(4326) %>%
+  # create new column
+  mutate(
+    id  = LSOA21CD,
+    long = unlist(map(geometry,1)),
+    lat = unlist(map(geometry,2))
+  )
+# remove geometry column
+origins$geometry <- NULL
+# only keep id, lon and lat
+origins <- origins %>%
+  select(id, long, lat)
+
+head(origins, 5)
+```
+
+### Destination 
+
+Testing on Camden borough only, so filter greenspace access points to Camden only first:
+
+```{r}
+greenspace_accesspoint_camden <- greenspace_accesspoint_london[
+  st_intersects(greenspace_accesspoint_london, st_union(camden_lsoa), sparse = FALSE), ]
+
+nrow(greenspace_accesspoint_camden)
+```
+
+```{r}
+destinations <- greenspace_accesspoint_camden %>%
+  st_transform(4326) %>%
+  mutate(
+    id  = as.character(row_number()),
+    lon = unlist(map(geometry, 1)),
+    lat = unlist(map(geometry, 2))
+  )
+
+destinations$geometry <- NULL
+
+destinations <- destinations %>%
+  select(id, lon, lat)
+
+head(destinations, 5)
+cat("Number of destination access points:", nrow(destinations), "\n")
+```
+
+## 4. r5r
+
+```{r}
+# increase Java memory
+options(java.parameters = "-Xmx6G")
+
+# load libraries
+library(r5r)
+
+#path <- system.file("r5r_path", package = "r5r")
+r5r_core <- setup_r5(data_path = "r5r_data/r5r_london_data.")
+```
