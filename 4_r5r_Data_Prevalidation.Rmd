@@ -117,7 +117,7 @@ Select routing parameters (travel times)
 # routing paramaters
 # travel by public transport only
 
-mode_transit <- c("TRANSIT")
+mode_transit <- c("WALK","TRANSIT")
 
 # maximum trip durations to be 1 hour (60 min)
 max_trip_duration <- 60 
@@ -197,4 +197,32 @@ test_walk <- travel_time_matrix(r5r_core,
 # compare
 summary(test_transit$travel_time_p50)
 summary(test_walk$travel_time_p50)
+```
+
+```{r}
+compare_camden <- TTM_Camden_PT %>%
+  rename(pt_time = travel_time_p50) %>%
+  inner_join(
+    TTM_Camden_walk %>%
+      rename(walk_time = travel_time_p50),
+    by = c("from_id", "to_id")
+  ) %>%
+  mutate(
+    diff_walk_minus_pt = walk_time - pt_time,
+    pt_faster = diff_walk_minus_pt > 0,
+    walk_faster = diff_walk_minus_pt < 0,
+    same_time = diff_walk_minus_pt == 0
+  )
+
+summary(compare_camden$diff_walk_minus_pt)
+
+compare_camden %>%
+  summarise(
+    n_pairs = n(),
+    same_time = sum(same_time, na.rm = TRUE),
+    pt_faster = sum(pt_faster, na.rm = TRUE),
+    walk_faster = sum(walk_faster, na.rm = TRUE),
+    pct_same = mean(same_time, na.rm = TRUE) * 100,
+    pct_pt_faster = mean(pt_faster, na.rm = TRUE) * 100
+  )
 ```
