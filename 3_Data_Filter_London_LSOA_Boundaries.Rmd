@@ -1,0 +1,44 @@
+---
+title: "3_Data_Filter_London_LSOA_Boundaries"
+---
+
+```{r, message=FALSE, warning=FALSE}
+# Load packages
+library(sf)
+library(dplyr)
+library(tmap)
+```
+
+```{r}
+# LSOA for whole Great Britian
+lsoa_gb <- st_read("Lower_layer_Super_Output_Areas_December_2021_Boundaries_EW_BFC_V10/LSOA_2021_EW_BFC_V10.shp")
+# London Boundary 
+london_boundary <- st_read("gla/London_GLA_Boundary.shp")
+
+# Ensure both have the same CRS
+london_boundary <- st_transform(london_boundary, st_crs(lsoa_gb))
+```
+
+```{r}
+# Centroids of LSOAs across GB
+lsoa_centroids <- st_centroid(lsoa_gb)
+```
+
+```{r}
+# Centroids within the London boundary
+lsoa_london <- lsoa_gb[st_within(lsoa_centroids, london_boundary, sparse = FALSE), ]
+```
+
+```{r}
+# Check number of LSOAs in the clipped: should be ~4,994
+nrow(lsoa_london) 
+```
+
+```{r}
+qtm(lsoa_london)
+```
+
+```{r}
+# Save as shapefile
+st_write(lsoa_london, "lsoa_london/lsoa_london.shp")
+```
