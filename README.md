@@ -17,4 +17,4 @@
 |Method|Conversion File|Dataset and Source|Description|
 |---|---|---|---|
 |1|2_GTFS_Data_Conversion.Rmd|As listed above|Found a substantial amount of missing data for London Tube and Overground from using NaPTAN and TNDS|
-|2|3_GTFS_Data_Conversion2.Rmd|To use Bus and Tube data from [Bus Open Data Service](https://www.gov.uk/transport/bus-services-routes-and-timetables); Rail data remain to be same as above|Bus Open Data Service GTFS data instead [(Lee and van Dijk, 2026)](https://doi.org/10.1016/j.cstp.2026.101768)|
+|2|3_GTFS_Data_Conversion2.Rmd|Bus GTFS-ready data directly downloaded from [Bus Open Data Service](https://www.gov.uk/transport/bus-services-routes-and-timetables)'s [All timetables data](https://data.bus-data.dft.gov.uk/timetable/download/) [(Lee and van Dijk, 2026)](https://doi.org/10.1016/j.cstp.2026.101768); National Rail will be the same file as above|
