@@ -12,3 +12,9 @@
 |Polygons/ Boundaries|Lower layer Super Output Areas (December 2021) Boundaries EW BFC (V10)|LSOA boundaries Shapefile|[View Link](https://geoportal.statistics.gov.uk/datasets/2bbaef5230694f3abae4f9145a3a9800_0/explore?location=52.837550%2C-2.489483%2C6)|London LSOA boundaries for aggregating LST, NDVI, NDWI, socioeconomic indicators, accessibility origin destinations|
 |Polygons/ Boundaries|Greater London Boundary|Greater London Boundary|[View Link](https://data.london.gov.uk/dataset/statistical-gis-boundary-files-for-london-20od9/)|Filter/ clip boundaries to London|
 |Socioeconomic data|Indicies of Multiple Depriviation (IMD 2025)|LSOA-level deprivation indicies for England|[View Link](https://www.gov.uk/government/statistics/english-indices-of-deprivation-2025)|Socioeconomic vulnerability and compare accessibility to cool greenspace across more/ less deprived neighbourhoods|
+
+### GTFS Data
+|Method|Conversion File|Dataset and Source|Description|
+|---|---|---|---|---|
+|1|2_GTFS_Data_Conversion.Rmd|As listed above|Found a substantial amount of missing data for London Tube and Overground from using NaPTAN and TNDS|
+|2|3_GTFS_Data_Conversion2.Rmd|To use Bus and Tube data from [Bus Open Data Service](https://www.gov.uk/transport/bus-services-routes-and-timetables); Rail data remain to be same as above|Bus Open Data Service GTFS data instead [(Lee and van Dijk, 2026)](https://doi.org/10.1016/j.cstp.2026.101768)|
