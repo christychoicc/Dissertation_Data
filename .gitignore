@@ -61,6 +61,9 @@ r5r_data/raw_data/L.zip
 r5r_data/raw_data/timetable.zip
 # Ready GTFS
 r5r_data/r5r_london_data/*
+.RDataTmp1/*
+.RDataTmp2/*
+.RDataTmp3/*
 
 
 
