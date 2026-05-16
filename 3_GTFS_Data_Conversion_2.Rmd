@@ -1,4 +1,196 @@
 ---
-title: "3_GTFS_Data_Conversion_2"
+title: "GTFS Data Conversion Attempt 2"
 ---
 
+## 1. Load Packages
+
+```{r}
+# Load packages
+library(sf)
+library(dplyr)
+library(tidyverse)
+library(tmap)
+```
+
+## 2. Data Loading and Pre-processing
+
+```{r}
+# Load London LSOA shapefile
+lsoa_london <- st_read("lsoa_london/lsoa_london.shp")
+```
+
+```{r}
+# filter to all Camden LSOAs
+camden_lsoa <- lsoa_london %>%
+  filter(grepl("Camden", LSOA21NM))
+
+# check how many LSOAs Camden has
+nrow(camden_lsoa)
+```
+
+```{r}
+# Load Greenspace Access Points
+greenspace_accesspoint_london <- st_read("OS-Open-Greenspace-GB/GB_AccessPoint/GB_AccessPoint.shp") %>%
+  # Ensure consistent CRS
+  st_transform(st_crs(lsoa_london)) %>%
+  # Filter to London only
+  .[st_intersects(., st_union(lsoa_london), sparse = FALSE), ]
+```
+
+## 3. Create origins and destinations
+
+### Origins
+
+```{r}
+sf_use_s2(FALSE)
+
+# create origin points
+origins <- st_centroid(camden_lsoa) %>%
+  # reproject
+  st_transform(4326) %>%
+  # create new column
+  mutate(
+    id  = LSOA21CD,
+    lon = as.numeric(unlist(map(geometry,1))),
+    lat = as.numeric(unlist(map(geometry,2)))
+  )
+# remove geometry column
+origins$geometry <- NULL
+# only keep id, lon and lat
+origins <- origins %>%
+  select(id, lon, lat)
+
+head(origins)
+```
+
+```{r}
+# Checks
+nrow(origins) 
+range(origins$lon) 
+range(origins$lat)
+sum(is.na(origins$lon)) 
+```
+
+### Destinations
+
+Testing on Camden borough only, so filter green space access points to Camden only first:
+
+```{r}
+greenspace_accesspoint_camden <- greenspace_accesspoint_london[
+  st_intersects(greenspace_accesspoint_london, st_union(camden_lsoa), sparse = FALSE), ]
+
+nrow(greenspace_accesspoint_camden)
+```
+
+Set destinations now:
+
+```{r}
+destinations <- greenspace_accesspoint_camden %>%
+  st_transform(4326) %>%
+  mutate(
+    id  = as.character(refToGSite),
+    lon = as.numeric(unlist(map(geometry, 1))),
+    lat = as.numeric(unlist(map(geometry, 2)))
+  )
+
+destinations$geometry <- NULL
+
+destinations <- destinations %>%
+  select(id, lon, lat)
+
+head(destinations)
+```
+
+```{r}
+# Checks
+nrow(destinations) 
+range(destinations$lon) 
+range(destinations$lat)
+sum(is.na(destinations$lon)) 
+```
+
+## 4. r5r
+
+Build network:
+
+```{r}
+# increase Java memory
+options(java.parameters = "-Xmx12G")
+
+# load libraries
+library(r5r)
+
+#path <- system.file("r5r_path", package = "r5r")
+r5r_core <- r5r::build_network(data_path = "r5r_data/r5r_london_data2")
+
+# used setup_r5() previously and got the following: 
+# Warning: ! `setup_r5()` is being deprecated in *r5r* v2.3.0 and will be removed in a future release. ℹ Please use `r5r::build_network()` instead.
+```
+
+```{r}
+library(tidytransit)
+
+# Read each GTFS file and check calendar coverage
+gtfs_bus  <- read_gtfs("r5r_data/r5r_london_data2/itm_london_gtfs.zip")
+gtfs_rail <- read_gtfs("r5r_data/r5r_london_data2/gtfs_rail.zip")
+
+# Check date ranges
+cat("=== BUS GTFS ===\n")
+cat("Start date:", as.character(min(gtfs_bus$calendar$start_date)), "\n")
+cat("End date:  ", as.character(max(gtfs_bus$calendar$end_date)), "\n")
+
+cat("\n=== RAIL GTFS ===\n")
+cat("Start date:", as.character(min(gtfs_rail$calendar$start_date)), "\n")
+cat("End date:  ", as.character(max(gtfs_rail$calendar$end_date)), "\n")
+```
+
+```{r}
+# routing paramatersv 
+
+# maximum trip durations to be 1 hour (60 min)
+max_trip_duration <- 60 
+
+# can change to just a day (no time) and it will return min time of the entire day 
+departure_datetime <- as.POSIXct("17-06-2026 08:30:00", 
+                                 format = "%d-%m-%Y %H:%M:%S",
+                                 tz = "Europe/London")
+
+mode_transit <- ("TRANSIT")
+
+# estimating the travel time
+TTM_Camden_PT <- travel_time_matrix(r5r_core,
+                          origins = origins,
+                          destinations = destinations,
+                          mode = mode_transit,
+                          departure_datetime = departure_datetime,
+                               max_trip_duration = max_trip_duration,
+                          time_window = 120)
+```
+
+```{r}
+nrow(TTM_Camden_PT)
+head(TTM_Camden_PT, 20)
+summary(TTM_Camden_PT$travel_time_p50)
+```
+
+```{r}
+# routing paramaters
+# travel by walking only 
+
+mode_walk <- c("WALK")
+
+# estimating the travel time
+TTM_Camden_walk <- travel_time_matrix(r5r_core,
+                          origins = origins,
+                          destinations = destinations,
+                          mode = mode_walk,
+                          departure_datetime = departure_datetime,
+                          max_trip_duration = max_trip_duration,
+                          time_window = 120)
+```
+
+```{r}
+nrow(TTM_Camden_walk)
+head(TTM_Camden_walk, 20)
+summary(TTM_Camden_walk$travel_time_p50)
+```
