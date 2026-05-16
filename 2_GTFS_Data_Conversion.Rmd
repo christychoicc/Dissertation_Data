@@ -1,5 +1,5 @@
 ---
-title: "r5r Data Preparation"
+title: "GTFS Data Conversion"
 ---
 
 ### 1. Installation
@@ -42,7 +42,7 @@ rJavaEnv::java_quick_install(version = 21)
 
 # Warning message: Currently, Java memory is set to "-Xmx512m"
 # Warning message suggest set Java max memory to 2 GB before loading r5r
-options(java.parameters = '-Xmx2G')
+options(java.parameters = '-Xmx12G')
 library(r5r)
 ```
 
@@ -54,16 +54,23 @@ library(r5r)
 
 -   Public transport feed in GTFS.zip format
 
-| Data | Description | Source |
-|----|----|----|
-| Stops.csv (Stops location) | Download as NaPTAN (National Public Transport Access Nodes) file, to be connected to TransXChange data, to be converted into a GTFS format (<https://citygeographics.org/r5r-workshop/uk-transit-data-transxchange-and-atoc/>). | <https://beta-naptan.dft.gov.uk/> |
-| L.zip (TransXChange timetable data) | Download L.zip (for London) (downloaded on 16/04/2026), to be converted into GTFS | Look for Core FTP and use the access host, username and password from the sent email |
-| timetable.zip (Train timetable data) | Convert to GTFS | <https://opendata.nationalrail.co.uk/> |
-| OSM in .pbf format (Road network) | Downloaded as .pbf file, to be used directly for r5r | <https://download.geofabrik.de/europe/united-kingdom/england/greater-london.html> |
++--------------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------------------------------------------------------+
+| Data                                 | Description                                                                                                                                                                                                                     | Source                                                                               |
++======================================+=================================================================================================================================================================================================================================+======================================================================================+
+| Stops.csv (Stops location)           | Download as NaPTAN (National Public Transport Access Nodes) file, to be connected to TransXChange data, to be converted into a GTFS format (<https://citygeographics.org/r5r-workshop/uk-transit-data-transxchange-and-atoc/>). | <https://beta-naptan.dft.gov.uk/>                                                    |
++--------------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------------------------------------------------------+
+| L.zip (TransXChange timetable data)  | Download L.zip (for London) (downloaded on 16/04/2026), to be converted into GTFS                                                                                                                                               | Look for Core FTP and use the access host, username and password from the sent email |
++--------------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------------------------------------------------------+
+| timetable.zip (Train timetable data) | Convert to GTFS                                                                                                                                                                                                                 | <https://opendata.nationalrail.co.uk/>                                               |
+|                                      |                                                                                                                                                                                                                                 |                                                                                      |
+|                                      | Train timetable needed as rail coverage for south London and wider south east is important.                                                                                                                                     |                                                                                      |
++--------------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------------------------------------------------------+
+| OSM in .pbf format (Road network)    | Downloaded as .pbf file, to be stored and used directly for r5r                                                                                                                                                                 | <https://download.geofabrik.de/europe/united-kingdom/england/greater-london.html>    |
++--------------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------------------------------------------------------+
 
 ### 3. GTFS Data
 
-#### 3.1. Bus, Tube, Tram Data
+#### 3.1. Bus, Tube, Overground, Tram Data
 
 **Convert data into GTFS format**
 
@@ -129,10 +136,10 @@ gtfs_write(gtfs,
 ```{r}
 # Data taken from National Rail Portal
 # Save username and password
-install.packages("usethis")
-library(usethis)
+#install.packages("usethis")
+#library(usethis)
 
-usethis::edit_r_environ()
+#usethis::edit_r_environ()
 ```
 
 ```{r}
@@ -143,78 +150,80 @@ usethis::edit_r_environ()
 ```{r}
 # Restarted R session, so load this library again
 # Load the specific package for converting to GTFS
-library(UK2GTFS)
+#library(UK2GTFS)
 
-nrdp_timetable("r5r_data/raw_data/timetable.zip")
+#nrdp_timetable("r5r_data/raw_data/timetable.zip")
 
-path_in <- "r5r_data/raw_data/timetable.zip"
-gtfs_rail <- atoc2gtfs(path_in = path_in,
-                       ncores = 5)
+#path_in <- "r5r_data/raw_data/timetable.zip"
+#gtfs_rail <- atoc2gtfs(path_in = path_in,
+#                       ncores = 5)
 
-gtfs_write(gtfs_rail,
-           folder = "r5r_data/r5r_london_data",
-           name = "gtfs_rail"
-)
+#gtfs_write(gtfs_rail,
+#           folder = "r5r_data/r5r_london_data",
+#           name = "gtfs_rail"
+#)
 ```
+
+Idea to narrow to London rail services only:
 
 Check what companies there are in the file (maybe filter to London services only?):
 
 ```{r}
-library(UK2GTFS)
-library(tidytransit)
+#library(UK2GTFS)
+#library(tidytransit)
 
 # read your already converted rail GTFS
-gtfs_rail <- read_gtfs("r5r_data/r5r_london_data/gtfs_rail.zip")
+#gtfs_rail <- read_gtfs("r5r_data/r5r_london_data/gtfs_rail.zip")
 
 # see all agency names
-gtfs_rail$agency %>%
-  select(agency_id, agency_name) %>%
-  arrange(agency_name)
+#gtfs_rail$agency %>%
+#  select(agency_id, agency_name) %>%
+#  arrange(agency_name)
 ```
 
 ```{r}
 # see all codes you have
-gtfs_rail$agency %>% pull(agency_id)
+#gtfs_rail$agency %>% pull(agency_id)
 ```
 
 ```{r}
 # Select London railway services operators
 # http://www.railwaycodes.org.uk/operators/toccodes.shtm
-london_operators <- c(
+#london_operators <- c(
    # Key London operators
-  "LT",  # London Underground
-  "LO",  # London Overground
-  "XR",  # Elizabeth line
+#  "LT",  # London Underground
+#  "LO",  # London Overground
+#  "XR",  # Elizabeth line
   
   # Wider London Operators
-  "TL",  # Thameslink: St Pancras, City Thameslink, Blackfriars, London Bridge
-  "GN",  # Great Northern: King's Cross, Moorgate/Old Street, ...north London
-  "SN",  # Southern: Victoria, London Bridge, ...south London
-  "SE",  # Southeastern: Charing Cross, Cannon Street, Victoria, London Bridge...
-  "SW",  # South Western Railway: Waterloo + Vauxhall; south-west London
-  "GX"   # Gatwick Express
-)
+#  "TL",  # Thameslink: St Pancras, City Thameslink, Blackfriars, London Bridge
+#  "GN",  # Great Northern: King's Cross, Moorgate/Old Street, ...north London
+#  "SN",  # Southern: Victoria, London Bridge, ...south London
+#  "SE",  # Southeastern: Charing Cross, Cannon Street, Victoria, London Bridge...
+#  "SW",  # South Western Railway: Waterloo + Vauxhall; south-west London
+#  "GX"   # Gatwick Express
+#)
 
 # filter to only london operators
-gtfs_rail_london <- gtfs_rail
-gtfs_rail_london$agency <- gtfs_rail$agency %>%
-  filter(agency_id %in% london_operators)
+#gtfs_rail_london <- gtfs_rail
+#gtfs_rail_london$agency <- gtfs_rail$agency %>%
+#  filter(agency_id %in% london_operators)
 
 # filter routes
-gtfs_rail_london$routes <- gtfs_rail$routes %>%
-  filter(agency_id %in% london_operators)
+#gtfs_rail_london$routes <- gtfs_rail$routes %>%
+#  filter(agency_id %in% london_operators)
 
 # filter trips 
-gtfs_rail_london$trips <- gtfs_rail$trips %>%
-  filter(route_id %in% gtfs_rail_london$routes$route_id)
+#gtfs_rail_london$trips <- gtfs_rail$trips %>%
+#  filter(route_id %in% gtfs_rail_london$routes$route_id)
 
 # filter stop_times 
-gtfs_rail_london$stop_times <- gtfs_rail$stop_times %>%
-  filter(trip_id %in% gtfs_rail_london$trips$trip_id)
+#gtfs_rail_london$stop_times <- gtfs_rail$stop_times %>%
+#  filter(trip_id %in% gtfs_rail_london$trips$trip_id)
 
 # Check before and after filtering
-nrow(gtfs_rail$stop_times)
-nrow(gtfs_rail_london$stop_times)
+#nrow(gtfs_rail$stop_times)
+#nrow(gtfs_rail_london$stop_times)
 ```
 
 ```{r}
