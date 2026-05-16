@@ -55,7 +55,7 @@ library(r5r)
 -   Public transport feed in GTFS.zip format
 
 | Data | Description | Source |
-|------------------|---------------------------------|---------------------|
+|----|----|----|
 | Stops.csv (Stops location) | Download as NaPTAN (National Public Transport Access Nodes) file, to be connected to TransXChange data, to be converted into a GTFS format (<https://citygeographics.org/r5r-workshop/uk-transit-data-transxchange-and-atoc/>). | <https://beta-naptan.dft.gov.uk/> |
 | L.zip (TransXChange timetable data) | Download L.zip (for London) (downloaded on 16/04/2026), to be converted into GTFS | Look for Core FTP and use the access host, username and password from the sent email |
 | timetable.zip (Train timetable data) | Convert to GTFS | <https://opendata.nationalrail.co.uk/> |
