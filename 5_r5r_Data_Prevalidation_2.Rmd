@@ -9,7 +9,7 @@ title: "GTFS Data Conversion Attempt 2"
 library(sf)
 library(dplyr)
 library(tidyverse)
-library(tmap)
+library(tidytransit)
 ```
 
 ## 2. Data Loading and Pre-processing
@@ -111,7 +111,56 @@ sum(is.na(destinations$lon))
 
 ## 4. r5r
 
-Build network:
+### GTFS data check
+
+Check Bus Open Data Service GTFS route type and service providers:
+
+```{r}
+# gtfs_bus <- read_gtfs("r5r_data/r5r_london_data2/itm_london_gtfs.zip")
+
+# Route types
+# 3 = bus, 1 = subway/tube, 2 = rail, 0 = tram
+table(gtfs_bus$routes$route_type)
+
+# Service providers (agency)
+unique(gtfs_bus$agency$agency_name)
+```
+
+Check rail GTFS:
+
+Ok above does not seem to include overground. So read in rail gtfs to check if have it:
+
+```{r}
+#gtfs_rail <- read_gtfs("r5r_data/r5r_london_data/gtfs_rail.zip")
+
+# Check all agencies
+unique(gtfs_rail$agency$agency_name)
+```
+
+Check what TfL Rail includes (elizabeth line??):
+
+```{r}
+gtfs_rail$routes %>%
+  left_join(gtfs_rail$agency, by = "agency_id") %>%
+  filter(grepl("TfL Rail", agency_name)) %>%
+  select(route_short_name, route_long_name, route_type)
+
+# check lizzy line stops 
+gtfs_rail$stops %>%
+  filter(grepl("Abbey Wood|Shenfield|Paddington|Liverpool Street|Whitechapel|Canary Wharf|Custom House|Woolwich", 
+               stop_name, ignore.case = TRUE)) %>%
+  select(stop_name, stop_id) %>%
+  arrange(stop_name)
+
+# number of trips TfL Rail operates
+gtfs_rail$trips %>%
+  left_join(gtfs_rail$routes, by = "route_id") %>%
+  left_join(gtfs_rail$agency, by = "agency_id") %>%
+  filter(grepl("TfL Rail", agency_name)) %>%
+  nrow()
+```
+
+### Build r5r network 
 
 ```{r}
 # increase Java memory
@@ -126,6 +175,8 @@ r5r_core <- r5r::build_network(data_path = "r5r_data/r5r_london_data2")
 # used setup_r5() previously and got the following: 
 # Warning: ! `setup_r5()` is being deprecated in *r5r* v2.3.0 and will be removed in a future release. ℹ Please use `r5r::build_network()` instead.
 ```
+
+Check valid dates:
 
 ```{r}
 library(tidytransit)
@@ -145,7 +196,7 @@ cat("End date:  ", as.character(max(gtfs_rail$calendar$end_date)), "\n")
 ```
 
 ```{r}
-# routing paramatersv 
+# set routing paramaters
 
 # maximum trip durations to be 1 hour (60 min)
 max_trip_duration <- 60 
@@ -154,7 +205,10 @@ max_trip_duration <- 60
 departure_datetime <- as.POSIXct("17-06-2026 08:30:00", 
                                  format = "%d-%m-%Y %H:%M:%S",
                                  tz = "Europe/London")
+```
 
+```{r}
+# travel by public transport only
 mode_transit <- ("TRANSIT")
 
 # estimating the travel time
@@ -174,7 +228,6 @@ summary(TTM_Camden_PT$travel_time_p50)
 ```
 
 ```{r}
-# routing paramaters
 # travel by walking only 
 
 mode_walk <- c("WALK")
