@@ -37,9 +37,9 @@ greenspace_accesspoint_london <- st_read("OS-Open-Greenspace-GB/GB_AccessPoint/G
   .[st_intersects(., st_union(lsoa_london), sparse = FALSE), ]
 ```
 
-## 3. Create origins and destinations
+## 3. Create origins and destinations for r5r
 
-### Origins
+### 3.1. Origins
 
 ```{r}
 sf_use_s2(FALSE)
@@ -71,7 +71,7 @@ range(origins$lat)
 sum(is.na(origins$lon)) 
 ```
 
-### Destinations
+### 3.2. Destinations
 
 Testing on Camden borough only, so filter green space access points to Camden only first:
 
@@ -111,7 +111,7 @@ sum(is.na(destinations$lon))
 
 ## 4. r5r
 
-### GTFS data check
+### 4.1. GTFS data check
 
 Check Bus Open Data Service GTFS route type and service providers:
 
@@ -160,7 +160,9 @@ gtfs_rail$trips %>%
   nrow()
 ```
 
-### Build r5r network 
+### 4.2. Build r5r network 
+
+#### 4.2.1. r5r network setup
 
 ```{r}
 # increase Java memory
@@ -176,24 +178,24 @@ r5r_core <- r5r::build_network(data_path = "r5r_data/r5r_london_data2")
 # Warning: ! `setup_r5()` is being deprecated in *r5r* v2.3.0 and will be removed in a future release. ℹ Please use `r5r::build_network()` instead.
 ```
 
-Check valid dates:
+#### 4.2.2. Check valid date ranges for both GTFS files
 
 ```{r}
-library(tidytransit)
-
 # Read each GTFS file and check calendar coverage
-gtfs_bus  <- read_gtfs("r5r_data/r5r_london_data2/itm_london_gtfs.zip")
-gtfs_rail <- read_gtfs("r5r_data/r5r_london_data2/gtfs_rail.zip")
+#gtfs_bus  <- read_gtfs("r5r_data/r5r_london_data2/itm_london_gtfs.zip")
+#gtfs_rail <- read_gtfs("r5r_data/r5r_london_data2/gtfs_rail.zip")
 
 # Check date ranges
-cat("=== BUS GTFS ===\n")
+cat("Bus GTFS\n")
 cat("Start date:", as.character(min(gtfs_bus$calendar$start_date)), "\n")
 cat("End date:  ", as.character(max(gtfs_bus$calendar$end_date)), "\n")
 
-cat("\n=== RAIL GTFS ===\n")
+cat("\nRail GTFS\n")
 cat("Start date:", as.character(min(gtfs_rail$calendar$start_date)), "\n")
 cat("End date:  ", as.character(max(gtfs_rail$calendar$end_date)), "\n")
 ```
+
+#### 4.2.3. Set Routing Parameters
 
 ```{r}
 # set routing paramaters
@@ -246,4 +248,174 @@ TTM_Camden_walk <- travel_time_matrix(r5r_core,
 nrow(TTM_Camden_walk)
 head(TTM_Camden_walk, 20)
 summary(TTM_Camden_walk$travel_time_p50)
+```
+
+### 4.3. Minimum Travel Time
+
+#### 4.3.1. Walking
+
+```{r}
+#select minimum value between pairs 
+TTM_Camden_walk2 <- TTM_Camden_walk %>%
+  group_by(to_id, from_id) %>% 
+  slice_min(travel_time_p50, n = 1, with_ties = FALSE, na_rm = FALSE) %>%
+  ungroup()
+```
+
+```{r}
+#pivot wider
+TTM_Camden_walk3  <- TTM_Camden_walk2 %>%
+  pivot_wider(names_from = to_id, values_from = travel_time_p50)
+
+head(TTM_Camden_walk3)
+```
+
+#### 4.3.2. Public Transit (Public Transport)
+
+```{r}
+#select minimum value between pairs 
+TTM_Camden_PT2 <- TTM_Camden_PT %>%
+  group_by(to_id, from_id) %>% 
+  slice(which.min(travel_time_p50))
+
+#check travel times as numeric
+TTM_Camden_PT2$travel_time_p50 <- as.numeric(TTM_Camden_PT2$travel_time_p50)
+
+#pivot wider to create a matrix
+TTM_Camden_PT3 <- TTM_Camden_PT2 %>%
+  pivot_wider(names_from = to_id, values_from = travel_time_p50)
+
+head(TTM_Camden_PT3)
+```
+
+### 4.4. Join to LSOAs
+
+```{r}
+ncol(TTM_Camden_PT3)
+ncol(TTM_Camden_walk3)
+```
+
+```{r}
+TTM_Camden_walk3 <- TTM_Camden_walk3 %>%
+  rowwise() %>%
+  mutate(
+    # use -1 to skip first column from_id
+    minimum_time_walk = min(c_across(-1), na.rm = TRUE),
+    mean_time_walk    = mean(c_across(-1), na.rm = TRUE)
+  ) %>%
+  ungroup()
+
+TTM_Camden_PT3 <- TTM_Camden_PT3 %>%
+  rowwise() %>%
+  mutate(
+    minimum_time_PT = min(c_across(-1), na.rm = TRUE),
+    mean_time_PT    = mean(c_across(-1), na.rm = TRUE)
+  ) %>%
+  ungroup()
+```
+
+```{r}
+# select and rename
+TTM_Camden_walk3 <- TTM_Camden_walk3 %>%
+  select(from_id, mean_time_walk, minimum_time_walk) %>%
+  rename(LSOA21CD = from_id)
+
+TTM_Camden_PT3 <- TTM_Camden_PT3 %>%
+  select(from_id, mean_time_PT, minimum_time_PT) %>%
+  rename(LSOA21CD = from_id)
+
+# join camden losa 
+camden_lsoa <- camden_lsoa %>%
+  left_join(TTM_Camden_walk3, by = "LSOA21CD") %>%
+  left_join(TTM_Camden_PT3,  by = "LSOA21CD")
+```
+
+Remove any inf values as these won't map:
+
+```{r}
+camden_lsoa <- camden_lsoa %>%
+  mutate(
+    minimum_time_walk = ifelse(is.infinite(minimum_time_walk), NA, minimum_time_walk),
+    minimum_time_PT   = ifelse(is.infinite(minimum_time_PT), NA, minimum_time_PT)
+  )
+```
+
+#### 4.4.1. Minimum Time Map
+
+Map Public Transport :
+
+```{r}
+library(tmap)
+
+tm_shape(camden_lsoa) +
+  tm_fill(col = "minimum_time_PT", 
+          title = "Minimum time to greenspace (mins)", 
+          style = "cont", n = 10, palette = "-Spectral",
+          colorNA = "white",
+          textNA = "PT beyond one hour") +
+  tm_borders(col = "grey", lwd = 0.01) +
+  tm_scale_bar(position = c("right", "top")) +
+  tm_compass(position = c("right", "top")) +
+  tm_layout(legend.outside = TRUE, frame = FALSE,
+            main.title = "PT access to greenspace in Camden",
+            main.title.position = "centre",
+            main.title.size = 0.9)
+```
+
+Map Walking:
+
+```{r}
+# Walking
+tm_shape(camden_lsoa) +
+  tm_fill(col = "minimum_time_walk", 
+          title = "Minimum time to greenspace (mins)", 
+          style = "cont", n = 10, palette = "-Spectral",
+          colorNA = "white",
+          textNA = "Walking beyond one hour") +
+  tm_borders(col = "grey", lwd = 0.01) +
+  tm_scale_bar(position = c("right", "top")) +
+  tm_compass(position = c("right", "top")) +
+  tm_layout(legend.outside = TRUE, frame = FALSE,
+            main.title = "Walking access to greenspace in Camden",
+            main.title.position = "centre",
+            main.title.size = 0.9)
+```
+
+Mean Time Map
+
+Public Transport:
+
+```{r}
+tm_shape(camden_lsoa) +
+  tm_fill(col = "mean_time_PT", 
+          title = "Mean time to greenspace (mins)", 
+          style = "cont", n = 10, palette = "-Spectral",
+          colorNA = "white",
+          textNA = "PT beyond one hour") +
+  tm_borders(col = "grey", lwd = 0.01) +
+  tm_scale_bar(position = c("right", "top")) +
+  tm_compass(position = c("right", "top")) +
+  tm_layout(legend.outside = TRUE, frame = FALSE,
+            main.title = "PT access to greenspace in Camden",
+            main.title.position = "centre",
+            main.title.size = 0.9)
+```
+
+Walking:
+
+```{r}
+# Walking
+tm_shape(camden_lsoa) +
+  tm_fill(col = "mean_time_walk", 
+          title = "Mean time to greenspace (mins)", 
+          style = "cont", n = 10, palette = "-Spectral",
+          colorNA = "white",
+          textNA = "Walking beyond one hour") +
+  tm_borders(col = "grey", lwd = 0.01) +
+  tm_scale_bar(position = c("right", "top")) +
+  tm_compass(position = c("right", "top")) +
+  tm_layout(legend.outside = TRUE, frame = FALSE,
+            main.title = "Walking access to greenspace in Camden",
+            main.title.position = "centre",
+            main.title.size = 0.9)
 ```
