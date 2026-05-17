@@ -63,5 +63,9 @@ r5r_data/raw_data/timetable.zip
 r5r_data/r5r_london_data/*
 r5r_data/r5r_london_data2/*
 
+.RData
+.RDataTmp*
+.Rhistory
+.Rapp.history
 
 
