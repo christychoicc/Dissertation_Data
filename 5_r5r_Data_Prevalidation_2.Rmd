@@ -332,13 +332,13 @@ camden_lsoa <- camden_lsoa %>%
   left_join(TTM_Camden_PT3,  by = "LSOA21CD")
 ```
 
-Remove any inf values as these won't map:
+Remove any inf values as these won't map:\
 
 ```{r}
 camden_lsoa <- camden_lsoa %>%
   mutate(
     minimum_time_walk = ifelse(is.infinite(minimum_time_walk), NA, minimum_time_walk),
-    minimum_time_PT   = ifelse(is.infinite(minimum_time_PT), NA, minimum_time_PT)
+    minimum_time_PT = ifelse(is.infinite(minimum_time_PT), NA, minimum_time_PT)
   )
 ```
 
