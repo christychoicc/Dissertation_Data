@@ -116,7 +116,7 @@ sum(is.na(destinations$lon))
 Check Bus Open Data Service GTFS route type and service providers:
 
 ```{r}
-# gtfs_bus <- read_gtfs("r5r_data/r5r_london_data2/itm_london_gtfs.zip")
+gtfs_bus <- read_gtfs("r5r_data/r5r_london_data2/itm_london_gtfs.zip")
 
 # Route types
 # 3 = bus, 1 = subway/tube, 2 = rail, 0 = tram
@@ -131,7 +131,7 @@ Check rail GTFS:
 Ok above does not seem to include overground. So read in rail gtfs to check if have it:
 
 ```{r}
-#gtfs_rail <- read_gtfs("r5r_data/r5r_london_data/gtfs_rail.zip")
+gtfs_rail <- read_gtfs("r5r_data/r5r_london_data/gtfs_rail.zip")
 
 # Check all agencies
 unique(gtfs_rail$agency$agency_name)
@@ -160,7 +160,7 @@ gtfs_rail$trips %>%
   nrow()
 ```
 
-### 4.2. Build r5r network 
+### 4.2. Build r5r network
 
 #### 4.2.1. r5r network setup
 
@@ -182,8 +182,8 @@ r5r_core <- r5r::build_network(data_path = "r5r_data/r5r_london_data2")
 
 ```{r}
 # Read each GTFS file and check calendar coverage
-#gtfs_bus  <- read_gtfs("r5r_data/r5r_london_data2/itm_london_gtfs.zip")
-#gtfs_rail <- read_gtfs("r5r_data/r5r_london_data2/gtfs_rail.zip")
+# gtfs_bus  <- read_gtfs("r5r_data/r5r_london_data2/itm_london_gtfs.zip")
+# gtfs_rail <- read_gtfs("r5r_data/r5r_london_data2/gtfs_rail.zip")
 
 # Check date ranges
 cat("Bus GTFS\n")
@@ -204,7 +204,7 @@ cat("End date:  ", as.character(max(gtfs_rail$calendar$end_date)), "\n")
 max_trip_duration <- 60 
 
 # can change to just a day (no time) and it will return min time of the entire day 
-departure_datetime <- as.POSIXct("17-06-2026 08:30:00", 
+departure_datetime <- as.POSIXct("17-06-2026 12:00:00", 
                                  format = "%d-%m-%Y %H:%M:%S",
                                  tz = "Europe/London")
 ```
@@ -219,8 +219,9 @@ TTM_Camden_PT <- travel_time_matrix(r5r_core,
                           destinations = destinations,
                           mode = mode_transit,
                           departure_datetime = departure_datetime,
-                               max_trip_duration = max_trip_duration,
-                          time_window = 120)
+                          max_trip_duration = max_trip_duration,
+                          time_window = 120,
+                          percentiles = c(25, 50, 75))
 ```
 
 ```{r}
@@ -241,7 +242,8 @@ TTM_Camden_walk <- travel_time_matrix(r5r_core,
                           mode = mode_walk,
                           departure_datetime = departure_datetime,
                           max_trip_duration = max_trip_duration,
-                          time_window = 120)
+                          time_window = 120,
+                          percentiles = 50)
 ```
 
 ```{r}
