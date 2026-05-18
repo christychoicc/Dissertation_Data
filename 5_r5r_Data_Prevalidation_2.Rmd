@@ -252,6 +252,20 @@ head(TTM_Camden_walk, 20)
 summary(TTM_Camden_walk$travel_time_p50)
 ```
 
+```{r}
+# Walking
+sum(TTM_Camden_walk3$minimum_time_walk == 0, na.rm = TRUE)
+mean(TTM_Camden_walk3$minimum_time_walk == 0, na.rm = TRUE) * 100
+
+# PT
+sum(TTM_Camden_PT3$minimum_time_PT == 0, na.rm = TRUE)
+mean(TTM_Camden_PT3$minimum_time_PT == 0, na.rm = TRUE) * 100
+
+# Which LSOAs are they?
+TTM_Camden_walk3 %>% filter(minimum_time_walk == 0) %>% select(LSOA21CD)
+TTM_Camden_PT3   %>% filter(minimum_time_PT   == 0) %>% select(LSOA21CD)
+```
+
 ### 4.3. Minimum Travel Time
 
 #### 4.3.1. Walking
@@ -383,7 +397,7 @@ tm_shape(camden_lsoa) +
             main.title.size = 0.9)
 ```
 
-Mean Time Map
+#### 4.4.2. Mean Time Map
 
 Public Transport:
 

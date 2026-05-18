@@ -24,4 +24,4 @@
 |Parameter|Purpose|Reference|
 |---|---|---|
 |time_window|To computes multiple accessibility estimates starting at the specified departure_datetime and within the time_window selected by the user|[r5r time_window tutorial](https://rdrr.io/cran/r5r/f/vignettes/time_window.Rmd)|
-|percentiles||Pereira, R.H., Saraiva, M., Herszenhut, D., Braga, C.K.V. and Conway, M.W., 2021. r5r: rapid realistic routing on multimodal transport networks with r 5 in r. Findings.|
+|percentiles|To capture variability in service frequency and reliability|[r5r time_window tutorial](https://rdrr.io/cran/r5r/f/vignettes/time_window.Rmd); Pereira, R.H., Saraiva, M., Herszenhut, D., Braga, C.K.V. and Conway, M.W., 2021. r5r: rapid realistic routing on multimodal transport networks with r 5 in r. Findings.|
