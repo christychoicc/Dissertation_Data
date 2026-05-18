@@ -221,12 +221,15 @@ TTM_Camden_PT <- travel_time_matrix(r5r_core,
                           departure_datetime = departure_datetime,
                           max_trip_duration = max_trip_duration,
                           time_window = 120,
-                          percentiles = c(25, 50, 75))
+                          # percentile is set default for 50 (median) but still typed it out to be clear here
+                          percentiles = 50
+                          # percentiles = c(25, 50, 75))
 ```
 
 ```{r}
 nrow(TTM_Camden_PT)
 head(TTM_Camden_PT, 20)
+# this calculates the median (by default)
 summary(TTM_Camden_PT$travel_time_p50)
 ```
 
